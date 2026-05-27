@@ -1,0 +1,4 @@
+#!/bin/bash
+set -e
+#singularity exec --net --network-args="bridge:portmap=8080:8080/tcp" --pwd /lemmi16s_frontend/ -B ${LEMMI16s_ROOT}/benchmark/final_results/:/lemmi16s_frontend/public/data/ $LEMMI16s_ROOT/benchmark/sif/lemmi16s_master.sif npm run serve
+singularity exec --pwd /lemmi16s_frontend/ -B ${LEMMI16s_ROOT}/benchmark/final_results/:/lemmi16s_frontend/public/data/ $LEMMI16s_ROOT/benchmark/sif/lemmi16s_master.sif npm run serve

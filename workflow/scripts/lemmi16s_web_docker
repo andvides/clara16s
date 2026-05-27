@@ -1,0 +1,6 @@
+#!/bin/bash
+set -e
+docker stop LEMMI16s_web 2> /dev/null || true
+docker rm LEMMI16s_web 2> /dev/null || true
+docker run --name LEMMI16s_web -p 8080:8080 -u $(id -u) -v ${LEMMI16s_ROOT}/benchmark/final_results/:/lemmi16s_frontend/public/data/ -w /lemmi16s_frontend/ $(cat $LEMMI16s_ROOT/config/config.yaml | grep -w lemmi16s_master | cut -f2,3 -d":") npm run serve
+

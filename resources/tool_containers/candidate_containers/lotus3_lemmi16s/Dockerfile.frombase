@@ -1,0 +1,35 @@
+#FROM ubuntu:22.04 AS build
+FROM quay.io/biocontainers/lotus2:2.34.1--hdfd78af_1
+
+####
+#
+# 1) install the common required stuff here
+#
+
+#ENV PACKAGES make gcc wget libc6-dev zlib1g-dev ca-certificates xz-utils
+#RUN apt-get update --fix-missing -y && apt-get install -y --no-install-recommends ${PACKAGES}
+#RUN apt-get install --fix-missing python3 git build-essential -y
+#RUN yes | perl -MCPAN -e "CPAN::Shell->notest(qw!install  List::MoreUtils!)"
+#RUN yes | perl -MCPAN -e "CPAN::Shell->notest(qw!install  Parallel::ForkManager!)"
+
+#RUN apt-get update && apt-get install bc -y
+
+####
+#
+# ***2) HERE INSTALL YOUR SOFTWARE.
+#
+
+RUN pip3 install pandas
+RUN pip install biom-format
+
+
+####
+#
+# ***3) ADD the additional files, all the sh and python scripts, including the 4 LEMMI_ scripts in /usr/bin so they can be executed 
+# don't forget to make the LEMMI_* scripts executable (chmod +x)
+#
+WORKDIR /data
+ADD scripts/sdm_PacBio_LSSU.txt .
+ADD scripts/*.sh /usr/bin/
+ADD scripts/*.py /usr/bin/
+# note: a LEMMI container needs the commands wget, ps, and bc

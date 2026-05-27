@@ -1,0 +1,13 @@
+name: clara16s
+channels:
+  - conda-forge
+  - bioconda
+  - etetoolkit
+dependencies:
+  - python=3.9
+  - snakemake >= 6.0.0
+  - ete3
+  - numpy
+  - pandas >= 1.2.0
+  - pyyaml
+  - biopython

@@ -93,6 +93,13 @@ RUN mkdir -p /.config /.cache && chmod -R a+rw /.config /.cache
 #    libp11-kit0 libffi8 && \
 #    rm -rf /var/lib/apt/lists/*
 
+
+WORKDIR /krona_tool
+RUN git clone https://github.com/marbl/Krona.git \
+    && cd Krona/KronaTools \
+    && ./install.pl --prefix /opt/krona
+ENV PATH="/opt/krona/bin:${PATH}"
+
 WORKDIR /DATMA16s_tools
 #RUN git clone https://github.com/rhowardstone/MHASS.git
 #WORKDIR /DATMA16s_tools/MHASS
@@ -106,6 +113,25 @@ WORKDIR /DATMA16s_tools
 
 #RUN conda install -n mhass -c bioconda -y samtools
 
+ENV CONDA_ACCEPT_CHANNELS=true
+RUN conda config --add channels conda-forge
+RUN conda config --add channels bioconda
+RUN conda config --add channels defaults
+RUN conda create -n clara_report \
+    r-base \
+    r-tidyverse \
+    r-plotly \
+    r-dt \
+    r-vegan \
+    r-dplyr \
+    r-tidyr \
+    r-ggplot2 \
+    r-vegan  \
+    quarto \
+    bioconductor-phyloseq \
+    -c conda-forge \
+    -c bioconda 
+    
 RUN pip3 install biopython
 RUN pip3 install pandas
 
@@ -114,3 +140,4 @@ ADD resources/*.py /usr/bin/
 ADD resources/*.sh /usr/bin/
 
 WORKDIR /data
+

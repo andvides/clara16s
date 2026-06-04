@@ -1,0 +1,228 @@
+---
+title: "CLARA16s Microbiome Report"
+engine: knitr
+
+params:
+  otu: hello.tsv
+  taxonomy: ""
+  metadata: ""
+
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    theme: cosmo
+    embed-resources: true
+
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+# Overview
+
+```{r load_packages}
+library(phyloseq)
+library(plotly)
+library(DT)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(vegan)
+```
+
+## Input files
+
+```{r check_inputs}
+cat("=== DEBUG ===\n")
+
+cat("exists(params): ",
+    exists("params"),
+    "\n")
+
+if (exists("params")) {
+
+    str(params)
+
+} else {
+
+    cat("params does not exist\n")
+
+}
+print(ls())
+print(exists("params"))
+print(params)
+
+cat("OTU      :", params$otu, "\n")
+cat("TAXONOMY :", params$taxonomy, "\n")
+cat("METADATA :", params$metadata, "\n")
+
+cat("OTU exists      :", file.exists(params$otu), "\n")
+cat("TAX exists      :", file.exists(params$taxonomy), "\n")
+cat("META exists     :", file.exists(params$metadata), "\n")
+```
+
+```{r working_directory}
+getwd()
+```
+## Load data
+
+```{r load_data}
+print("params")
+otu <- read.table(params$otu, header=TRUE, sep="\t", row.names=1, check.names=FALSE)
+tax <- read.table(params$taxonomy, header=TRUE, sep="\t", row.names=1, check.names=FALSE)
+meta <- read.table(params$metadata, header=TRUE, sep="\t", row.names=1, check.names=FALSE)
+
+ps <- phyloseq(
+  otu_table(as.matrix(otu), taxa_are_rows=TRUE),
+  tax_table(as.matrix(tax)),
+  sample_data(meta)
+)
+
+ps
+```
+
+## Sequencing depth
+
+```{r sequencing_depth}
+sample_summary <- data.frame(
+    Sample = sample_names(ps),
+    Reads = sample_sums(ps)
+)
+
+DT::datatable(sample_summary)
+```
+
+## Taxonomy table
+
+```{r taxonomy_table}
+DT::datatable(as.data.frame(tax_table(ps)))
+```
+
+## Relative abundance by Phylum
+
+```{r phylum_plot}
+ps.phylum <- tax_glom(ps, taxrank="Phylum")
+ps.phylum.rel <- transform_sample_counts( ps.phylum, function(x) x / sum(x) ) 
+df.phylum <- psmelt(ps.phylum.rel) 
+p <- ggplot( df.phylum, aes( x = Sample, y = Abundance, fill = Phylum ) ) + 
+    geom_bar( stat = "identity" ) + theme_bw() + 
+    theme( axis.text.x = element_text( angle = 90, hjust = 1 ) ) 
+ggplotly(p)
+
+
+ps.phylum.rel <- transform_sample_counts(
+    ps.phylum,
+    function(x) x/sum(x)
+)
+
+df <- psmelt(ps.phylum.rel)
+```
+## Top 20 Genera
+```{r top 20}
+
+ps.genus <- tax_glom(
+  ps,
+  taxrank = "Genus"
+)
+
+ps.genus.rel <- transform_sample_counts(
+  ps.genus,
+  function(x) x / sum(x)
+)
+
+df.genus <- psmelt(ps.genus.rel)
+
+top20 <- df.genus %>%
+  group_by(Genus) %>%
+  summarise(
+    TotalAbundance = sum(Abundance)
+  ) %>%
+  arrange(desc(TotalAbundance)) %>%
+  slice_head(n = 20)
+
+df.top <- df.genus %>%
+  filter(Genus %in% top20$Genus)
+
+p <- ggplot(
+  df.top,
+  aes(
+    x = Sample,
+    y = Abundance,
+    fill = Genus
+  )
+) +
+  geom_bar(
+    stat = "identity"
+  ) +
+  theme_bw() +
+  theme(
+    axis.text.x = element_text(
+      angle = 90,
+      hjust = 1
+    )
+  )
+
+ggplotly(p)
+```
+
+## Alpha Diversity
+```{r aplha Diversity}
+alpha <- estimate_richness(
+  ps,
+  measures = c(
+    "Observed",
+    "Shannon",
+    "Simpson"
+  )
+)
+
+alpha$SampleID <- rownames(alpha)
+
+datatable(alpha)
+
+p <- ggplot(
+  alpha,
+  aes(
+    x = SampleID,
+    y = Shannon
+  )
+) +
+  geom_point(size = 3) +
+  theme_bw() +
+  theme(
+    axis.text.x = element_text(
+      angle = 90,
+      hjust = 1
+    )
+  )
+
+ggplotly(p)
+```
+## Beta Diversity (Bray-Curtis PCoA)
+```{r beta Diversity}
+ord <- ordinate(
+  ps,
+  method = "PCoA",
+  distance = "bray"
+)
+
+ord.df <- plot_ordination(
+  ps,
+  ord,
+  justDF = TRUE
+)
+
+p <- ggplot(
+  ord.df,
+  aes(
+    Axis.1,
+    Axis.2
+  )
+) +
+  geom_point(size = 4) +
+  theme_bw()
+
+ggplotly(p)
+```

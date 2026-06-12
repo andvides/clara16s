@@ -94,6 +94,23 @@ rule target:
             instance=instances,
         ),
 
+
+rule cleanReads:
+    input:
+        data = lambda wc: f"{dataset}/{wc.all_samples}"
+    output:
+        cleanReads="{root}instances/{instance}/{all_samples}/queryReads.fq"
+    params: docker_suffix="clean" if container_runner != "" else "", 
+    message:
+        "Running cleanReads for sample {wildcards.all_samples}..."
+    container:
+        "{}sif/{}.sif".format(root, toolname)
+    threads: int(workflow.cores)   
+    shell:
+        """
+       {extract} {input.data}/* > {output.cleanReads}_clean
+        """
+
 rule training_model:
     input:
         instance=expand("{root}instances/{instance}", root=root, instance=instances),
@@ -131,7 +148,12 @@ rule training_model:
         
 rule run_analysis:
     input:
-        instance=expand("{root}instances/{instance}", root=root, instance=instances),
+        cleanReads=expand(
+            "{root}instances/{instance}/{all_samples}/queryReads.fq",
+            root=root,
+            instance=instances,
+            all_samples=all_samples,
+        ),
         runtime_training=expand(
             "{root}analysis_outputs/{toolname}.{instance}.memory_training.txt",
             root=root,
@@ -169,10 +191,6 @@ rule run_analysis:
     threads: int(workflow.cores)
     shell:
         """
-
-        # run the tool
-        {extract} {dataset}/{wildcards.all_samples}/* > {input.instance}/{wildcards.all_samples}/queryReads.fq
-
         {container_runner}{params.docker_suffix} {docker_container} {root}../workflow/scripts/task_wrapper.sh \
         LEMMI16s_analysis.sh {params.tech}\
         {wildcards.instance}-{wildcards.all_samples} {input.instance}/{wildcards.all_samples} \
@@ -183,7 +201,6 @@ rule run_analysis:
 
         # remove stopped docker containers
         {clean}
-
         """
         
         

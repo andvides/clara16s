@@ -44,6 +44,7 @@ rule download_seq:
   params: container_suffix=("downloadDatabase" if container_runner != "" else "")
   shell:  """
           {container_runner}{params.container_suffix} {docker_container} downloadDatabase.sh {root}repository/{Database_name} {release} {crudeSequences}
+          {clean}
           """
 
 rule curation:

@@ -3,7 +3,7 @@
 In short:
 
 ```bash
-git clone https://github.com/andvides/clara.git
+git clone https://github.com/andvides/clara16s.git
 cd clara
 git checkout tags/v1.0.1
 

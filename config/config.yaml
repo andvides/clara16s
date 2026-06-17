@@ -2,14 +2,15 @@ Database: "SILVA:release_138.2"
 #"Greengenes2:release214_2024.09" "GTDB:release214_214.0" "SILVA:release_138.1" 
 GCN_ref: "https://rrndb.umms.med.umich.edu/static/download/rrnDB-5.8_pantaxa_stats_NCBI.tsv.zip"
 Dataset: "path to dataset"
-format: gz #choose gz or fastq
-instance: soil #instance name
+instance: "instance name" 
 technology: PacBio #NGS illumina, Nanopore, PacBio
-clara16s_master: clara16s_master
-docker_memory: 40g
-no_evaluation: []
+min_len: 100 #min read lenght
+forward_primer: "TTTCTGTTGGTGCTGATATTGC" #5´primer
+reverse_primer: "ACTTGCCTGTCGCTCTATCTTC" #3' primer
+clara16s_master: clara16s_master 
+docker_memory: 80g
+no_evaluation: 
 distribute_cores_to_n_tasks: 1
 sample:
   - Sample1
   - Sample2
-

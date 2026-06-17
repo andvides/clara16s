@@ -1,7 +1,7 @@
 #!/bin/bash
 shopt -s nullglob
-if [[ -z "$DATMA16s_ROOT" ]]; then
-    echo "Must set DATMA16s_ROOT in environment" 1>&2
+if [[ -z "$CLARA16s_ROOT" ]]; then
+    echo "Must set CLARA16s_ROOT in environment" 1>&2
     exit 1
 fi
 
@@ -14,43 +14,26 @@ else
     rerun=""
 fi
 
-
 echo "Setting up the repository..."
-snakemake ${rerun} --singularity-args "-B $DATMA16s_ROOT:$DATMA16s_ROOT" --rerun-incomplete --printshellcmds --snakefile ${DATMA16s_ROOT}/workflow/rules/repository.smk --configfile ${DATMA16s_ROOT}/config/config.yaml --directory ${DATMA16s_ROOT} --reason --config datetime=$dt $@
+snakemake ${rerun} --singularity-args "-B $CLARA16s_ROOT:$CLARA16s_ROOT" --rerun-incomplete --printshellcmds --snakefile ${CLARA16s_ROOT}/workflow/rules/repository.smk --configfile ${CLARA16s_ROOT}/config/config.yaml --directory ${CLARA16s_ROOT} --reason --config datetime=$dt $@
 
+echo "Cleaning input reads..."
+snakemake ${rerun} --singularity-args "-B $CLARA16s_ROOT:$CLARA16s_ROOT" --rerun-incomplete --printshellcmds --snakefile ${CLARA16s_ROOT}/workflow/rules/cleaning.smk --configfile ${CLARA16s_ROOT}/config/config.yaml --directory ${CLARA16s_ROOT} --reason --config datetime=$dt $@
 
-echo "Running analyses..."
-for analysis in ${DATMA16s_ROOT}/data/yaml/runs/*.yaml
+echo "Running analysis..."
+for analysis in ${CLARA16s_ROOT}/data/tools/*.yaml
 do
 echo "... for "$analysis
-cat $analysis ${DATMA16s_ROOT}/config/config.yaml > ${DATMA16s_ROOT}/.analysis.yaml
-cat ${DATMA16s_ROOT}/benchmark/yaml/instances/$(cat ${DATMA16s_ROOT}/.analysis.yaml | grep instance | cut -f2 -d":" | tr -d " ").yaml >> ${DATMA16s_ROOT}/.analysis.yaml
-snakemake ${rerun} --singularity-args "-B $DATMA16s_ROOT:$DATMA16s_ROOT" --rerun-incomplete --printshellcmds --snakefile ${DATMA16s_ROOT}/workflow/rules/analysis.smk --configfile ${DATMA16s_ROOT}/.analysis.yaml --directory ${DATMA16s_ROOT} --reason --config datetime=$dt $@
-mv ${DATMA16s_ROOT}/.analysis.yaml ${DATMA16s_ROOT}/benchmark/yaml/processed_archives/$(basename $analysis).$dt
+cat $analysis ${CLARA16s_ROOT}/config/config.yaml > ${CLARA16s_ROOT}/.analysis.yaml
+snakemake ${rerun} --singularity-args "-B $CLARA16s_ROOT:$CLARA16s_ROOT" --rerun-incomplete --printshellcmds --snakefile ${CLARA16s_ROOT}/workflow/rules/analysis.smk --configfile ${CLARA16s_ROOT}/.analysis.yaml --directory ${CLARA16s_ROOT} --reason --config datetime=$dt $@
+mv ${CLARA16s_ROOT}/.analysis.yaml ${CLARA16s_ROOT}/data/tools/processed_tools/$(basename $analysis).$dt
 done
 
 echo "Running evaluations..."
-for evaluation in ${DATMA16s_ROOT}/benchmark/yaml/instances/*.yaml
-do
-echo "... for "$evaluation
-cat $evaluation ${DATMA16s_ROOT}/config/config.yaml > ${DATMA16s_ROOT}/.evaluation.yaml
-filename=$(basename $evaluation)
-echo "instance_name: $(echo $filename | rev | cut -f2-10 -d"." | rev)" >> ${DATMA16s_ROOT}/.evaluation.yaml
-snakemake ${rerun} --singularity-args "-B $DATMA16s_ROOT:$DATMA16s_ROOT" --rerun-incomplete --printshellcmds --snakefile ${DATMA16s_ROOT}/workflow/rules/eval.smk --configfile ${DATMA16s_ROOT}/.evaluation.yaml --directory ${DATMA16s_ROOT} --reason --config datetime=$dt $@
-mv ${DATMA16s_ROOT}/.evaluation.yaml ${DATMA16s_ROOT}/benchmark/yaml/processed_archives/$(basename $evaluation).evaluation.yaml.$dt
-done
+cat ${CLARA16s_ROOT}/config/config.yaml > ${CLARA16s_ROOT}/.evaluation.yaml
+snakemake ${rerun} --singularity-args "-B $CLARA16s_ROOT:$CLARA16s_ROOT" --rerun-incomplete --printshellcmds --snakefile ${CLARA16s_ROOT}/workflow/rules/eval.smk --configfile ${CLARA16s_ROOT}/.evaluation.yaml --directory ${CLARA16s_ROOT} --reason --config datetime=$dt $@
+mv ${CLARA16s_ROOT}/.evaluation.yaml ${CLARA16s_ROOT}/data/tools/processed_tools/evaluation.$dt
 
-echo "updating structure.json..."
-echo "{" > ${DATMA16s_ROOT}/benchmark/final_results/structure.json.tmp
-for structure in ${DATMA16s_ROOT}/benchmark/final_results/*.structure.json
-do
-    cat $structure >> ${DATMA16s_ROOT}/benchmark/final_results/structure.json.tmp
-    echo -e "," >> ${DATMA16s_ROOT}/benchmark/final_results/structure.json.tmp
-done
-sed \$d ${DATMA16s_ROOT}/benchmark/final_results/structure.json.tmp > ${DATMA16s_ROOT}/benchmark/final_results/structure.json
-echo -e "\t}\n}" >> ${DATMA16s_ROOT}/benchmark/final_results/structure.json
-rm ${DATMA16s_ROOT}/benchmark/final_results/structure.json.tmp
-
-echo "DATMA16s DONE"
+echo "CLARA16s DONE"
 
 

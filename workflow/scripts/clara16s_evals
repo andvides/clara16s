@@ -14,12 +14,13 @@ else
     rerun=""
 fi
 
-
-echo "skipping up the repository..."
+echo "Skipping Setting up the repository..."
 #snakemake ${rerun} --singularity-args "-B $CLARA16s_ROOT:$CLARA16s_ROOT" --rerun-incomplete --printshellcmds --snakefile ${CLARA16s_ROOT}/workflow/rules/repository.smk --configfile ${CLARA16s_ROOT}/config/config.yaml --directory ${CLARA16s_ROOT} --reason --config datetime=$dt $@
 
+echo "Skipping Cleaning input reads..."
+#snakemake ${rerun} --singularity-args "-B $CLARA16s_ROOT:$CLARA16s_ROOT" --rerun-incomplete --printshellcmds --snakefile ${CLARA16s_ROOT}/workflow/rules/cleaning.smk --configfile ${CLARA16s_ROOT}/config/config.yaml --directory ${CLARA16s_ROOT} --reason --config datetime=$dt $@
 
-echo "skipping analyses..."
+echo "Skipping Running analysis..."
 # for analysis in ${CLARA16s_ROOT}/data/tools/*.yaml
 # do
 # echo "... for "$analysis
@@ -33,6 +34,9 @@ cat ${CLARA16s_ROOT}/config/config.yaml > ${CLARA16s_ROOT}/.evaluation.yaml
 snakemake ${rerun} --singularity-args "-B $CLARA16s_ROOT:$CLARA16s_ROOT" --rerun-incomplete --printshellcmds --snakefile ${CLARA16s_ROOT}/workflow/rules/eval.smk --configfile ${CLARA16s_ROOT}/.evaluation.yaml --directory ${CLARA16s_ROOT} --reason --config datetime=$dt $@
 mv ${CLARA16s_ROOT}/.evaluation.yaml ${CLARA16s_ROOT}/data/tools/processed_tools/evaluation.$dt
 
+#cp data/evaluations/kraken2_216_lemmi16s.datos_suelo_CM2.krona.html /home/andres_benavides/Data/clara16s_web/lovable3/public/data/datos_suelo_CM2/kraken2_krona.html
+#cp data/evaluations/kraken2_216_lemmi16s.datos_suelo_CM2.report.html /home/andres_benavides/Data/clara16s_web/lovable3/public/data/datos_suelo_CM2/kraken2_report.html
+#cp data/instances/datos_suelo_CM2/multiqc/multiqc_report.html /home/andres_benavides/Data/clara16s_web/lovable3/public/data/datos_suelo_CM2/multiqc.html 
 echo "CLARA16s DONE"
 
 

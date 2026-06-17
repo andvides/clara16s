@@ -18,6 +18,8 @@ fi
 echo "Skiping Setting up the repository..."
 #snakemake ${rerun} --singularity-args "-B $CLARA16s_ROOT:$CLARA16s_ROOT" --rerun-incomplete --printshellcmds --snakefile ${CLARA16s_ROOT}/workflow/rules/repository.smk --configfile ${CLARA16s_ROOT}/config/config.yaml --directory ${CLARA16s_ROOT} --reason --config datetime=$dt $@
 
+echo "Skiping Cleaning input reads..."
+#snakemake ${rerun} --singularity-args "-B $CLARA16s_ROOT:$CLARA16s_ROOT" --rerun-incomplete --printshellcmds --snakefile ${CLARA16s_ROOT}/workflow/rules/cleaning.smk --configfile ${CLARA16s_ROOT}/config/config.yaml --directory ${CLARA16s_ROOT} --reason --config datetime=$dt $@
 
 echo "Running analysis..."
 for analysis in ${CLARA16s_ROOT}/data/tools/*.yaml

@@ -12,7 +12,6 @@ os.chdir(tmp)
 Database_name=config["Database"].split(':')[0].upper()
 #Database_name=config["targets_taxonomy"].upper()
 dataset=config["Dataset"] 
-extract = 'zcat' if config["format"] == 'gz' else 'cat'
 toolname = config["container"].split("/")[-1].split(":")[0]
 instances = config["instance"]
 

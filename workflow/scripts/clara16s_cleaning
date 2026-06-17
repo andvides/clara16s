@@ -1,0 +1,27 @@
+#!/bin/bash
+shopt -s nullglob
+if [[ -z "$CLARA16s_ROOT" ]]; then
+    echo "Must set CLARA16s_ROOT in environment" 1>&2
+    exit 1
+fi
+
+dt=$(date +%s)
+
+if (echo 7.8.0; snakemake --version ) | sort -Vr | tail -n 1 | grep -q "7.8.0"
+then
+    rerun="--rerun-triggers mtime"
+else
+    rerun=""
+fi
+
+
+echo "Skipping Setting up the repository..."
+#snakemake ${rerun} --singularity-args "-B $CLARA16s_ROOT:$CLARA16s_ROOT" --rerun-incomplete --printshellcmds --snakefile ${CLARA16s_ROOT}/workflow/rules/repository.smk --configfile ${CLARA16s_ROOT}/config/config.yaml --directory ${CLARA16s_ROOT} --reason --config datetime=$dt $@
+
+echo "Cleaning input reads..."
+snakemake ${rerun} --singularity-args "-B $CLARA16s_ROOT:$CLARA16s_ROOT" --rerun-incomplete --printshellcmds --snakefile ${CLARA16s_ROOT}/workflow/rules/cleaning.smk --configfile ${CLARA16s_ROOT}/config/config.yaml --directory ${CLARA16s_ROOT} --reason --config datetime=$dt $@
+
+
+echo "CLARA16s DONE"
+
+

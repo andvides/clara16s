@@ -11,7 +11,6 @@ os.chdir(tmp)
 
 Database_name=config["Database"].split(':')[0].upper()
 dataset=config["Dataset"] 
-extract = 'zcat' if config["format"] == 'gz' else 'cat'
 instances = config["instance"]
 technology=config["technology"]
 
@@ -23,12 +22,14 @@ toolbox.validate_config(config)
 
 #READS CONFIG
 all_samples = config["sample"]
-print(f"{dataset}+{' '.join(all_samples)}")
+print(f"{dataset}{' '.join(all_samples)}")
 for sample in config["sample"]:
     dir_name = f"{root}/instances/{instances}/{sample}"
     os.makedirs(dir_name, exist_ok=True)
 
-
+forward_primer = config["forward_primer"] if config["forward_primer"] != '' else 'TTTCTGTTGGTGCTGATATTGC'
+reverse_primer = config["reverse_primer"] if config["reverse_primer"] != '' else 'ACTTGCCTGTCGCTCTATCTTC'
+min_len = int(config["min_len"]) if config["min_len"] != '' else 100
 localrules:
     target,
 
@@ -80,14 +81,15 @@ rule amplicon_qc_raw:
         qc_summary="{root}instances/{instance}/{all_samples}/raw/qc_summary.tsv"
     message:
         "Raw QC: {wildcards.all_samples}"
-    params:docker_suffix=lambda wc: f"amplicon_qc_raw{wc.all_samples}" if container_runner != "" else "",
+    params:container_suffix=lambda wc: f"amplicon_qc_raw{wc.all_samples}" if container_runner != "" else "",
+    threads: int(workflow.cores)
     shell:
         """
-        {container_runner}{params.container_suffix} {docker_container} 
-        ./fastqc_qc.sh \
+        {container_runner}{params.container_suffix} -v {dataset}:{dataset} {docker_container} fastqc_qc.sh \
             -i {input.reads} \
             -t {technology} \
-            -o {root}instances/{instance}/{wildcards.all_samples}/raw
+            -o {root}instances/{wildcards.instance}/{wildcards.all_samples}/raw \
+            -p {threads}
         {clean}
         """
 
@@ -99,9 +101,7 @@ rule mergeReads:
         reads="{root}instances/{instance}/{all_samples}/merged/queryReads.concat.fastq.gz"
     message:
         "Merging reads: {wildcards.all_samples}"
-    params: docker_suffix=lambda wc: f"mergeReads{wc.all_samples}" if container_runner != "" else "",
-    container:
-        "{}sif/{}.sif".format(root, toolname)
+    params: container_suffix=lambda wc: f"mergeReads{wc.all_samples}" if container_runner != "" else "",
     threads: int(workflow.cores)
     shell:
         """
@@ -116,21 +116,19 @@ rule trim_primers:
         reads="{root}instances/{instance}/{all_samples}/trimmed/queryReads.trimmed.fastq.gz",
         json="{root}instances/{instance}/{all_samples}/trimmed/cutadapt.json",
         log="{root}instances/{instance}/{all_samples}/trimmed/cutadapt.log"
-    params:docker_suffix=lambda wc: f"trim_primers{wc.all_samples}" if container_runner != "" else "",
+    params:container_suffix=lambda wc: f"trim_primers{wc.all_samples}" if container_runner != "" else "",
             tech=technology if technology == "PacBio" else "illumina", 
             fwd=forward_primer,
             rev=reverse_primer,
-            min_len=100,
+            min_len=min_len,
     message:
         "Cutadapt: {wildcards.all_samples}"
-    container:
-        "{}sif/{}.sif".format(root, toolname)
     threads: int(workflow.cores)
     shell:
         """
         mkdir -p $(dirname {output.reads})
 
-        cutadapt \
+        {container_runner}{params.container_suffix} {docker_container} cutadapt \
             -g {params.fwd} \
             -a {params.rev} \
             --discard-untrimmed \
@@ -147,19 +145,17 @@ rule amplicon_qc_trimmed:
     output:
         qc_metrics="{root}instances/{instance}/{all_samples}/trimmed/qc_metrics.tsv",
         qc_summary="{root}instances/{instance}/{all_samples}/trimmed/qc_summary.tsv"
-    params:docker_suffix=lambda wc: f"amplicon_qc_trimmed{wc.all_samples}" if container_runner != "" else "",
+    params:container_suffix=lambda wc: f"amplicon_qc_trimmed{wc.all_samples}" if container_runner != "" else "",
             tech=technology if technology == "PacBio" else "illumina", 
     message:
         "Trimmed QC: {wildcards.all_samples}"
-    container:
-        "{}sif/{}.sif".format(root, toolname)
     threads: int(workflow.cores)
     shell:
         """
-            ./fastqc_qc.sh \
+            {container_runner}{params.container_suffix} {docker_container} fastqc_qc.sh \
                 -i {input.reads} \
                 -t {technology} \
-                -o {params.outdir} \
+                -o {root}instances/{wildcards.instance}/{wildcards.all_samples}/trimmed \
                 -p {threads}
         """
         
@@ -168,25 +164,25 @@ rule multiqc:
     input:
         expand(
             "{root}instances/{instance}/{all_samples}/trimmed/cutadapt.json",
+            root=root,
+            instance=instances,
             all_samples=all_samples
         )
     output:
         report="{root}instances/{instance}/multiqc/multiqc_report.html"
-    params: docker_suffix=lambda wc: f"multiqc{wc.all_samples}" if container_runner != "" else "",
+    params: container_suffix=lambda wc: f"multiqc{wc.instance}" if container_runner != "" else "",
             tech=technology if technology == "PacBio" else "illumina", 
     message:
         "run multiqc sets..."
-    container:
-        "{}sif/{}.sif".format(root, toolname)
     threads: int(workflow.cores)
     shell:
         """
-        mkdir -p {root}instances/{instance}/multiqc
+        mkdir -p {root}instances/{wildcards.instance}/multiqc
 
-        multiqc \
-            {root}instances/{instance} \
+        {container_runner}{params.container_suffix} {docker_container} multiqc \
+            {root}instances/{wildcards.instance} \
             --force \
-            -o {root}instances/{instance}/multiqc
+            -o {root}instances/{wildcards.instance}/multiqc
         """
 
         

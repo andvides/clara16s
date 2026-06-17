@@ -10,14 +10,16 @@ cat << EOF
 Usage:
   $(basename "$0") \
       -i <reads_dir> \
-      -t <illumina|pacbio-hifi|nanopore> \
-      -o <output_dir>
+      -t <illumina|pacbio|nanopore> \
+      -o <output_dir> \
+      -p <threads>
 
 Example:
   $(basename "$0") \
       -i ./fastq \
       -t illumina \
-      -o ./qc
+      -o ./qc \
+      -p 16
 
 EOF
 exit 1
@@ -29,12 +31,14 @@ exit 1
 READ_DIR=""
 TECH=""
 OUTDIR=""
+THREADS=""
 
-while getopts "i:t:o:h" opt; do
+while getopts "i:t:o:p:h" opt; do
     case "$opt" in
         i) READ_DIR="$OPTARG" ;;
-        t) TECH="$OPTARG" ;;
+        t) TECH="${OPTARG,,}" ;;
         o) OUTDIR="$OPTARG" ;;
+        p) THREADS="$OPTARG" ;;
         h) usage ;;
         *) usage ;;
     esac
@@ -43,17 +47,18 @@ done
 [[ -z "$READ_DIR" ]] && usage
 [[ -z "$TECH" ]] && usage
 [[ -z "$OUTDIR" ]] && usage
+[[ -z "$THREADS" ]] && usage
 
 ########################################
 # Validate technology
 ########################################
 case "$TECH" in
-    illumina|pacbio-hifi|nanopore)
+    illumina|pacbio|nanopore)
         ;;
     *)
-        echo "ERROR: Technology must be one of:"
+        echo "ERROR ${TECH}: Technology must be one of:"
         echo "  illumina"
-        echo "  pacbio-hifi"
+        echo "  pacbio"
         echo "  nanopore"
         exit 1
         ;;
@@ -176,7 +181,7 @@ Recommended review:
 EOF
 ;;
 
-pacbio-hifi)
+pacbio)
 cat << EOF
 
 Recommended review:

@@ -40,12 +40,15 @@ dataset=config["Dataset"]
 instances = config["instance"]
 gcn_normalization = "yes" if config.get("gcn_normalization") == 1 else "no"
 #print(gcn_normalization)
+print(f"dataset:{dataset}")
 
 all_samples = config["sample"]
 print(f"{dataset}+{' '.join(all_samples)}")
 for sample in config["sample"]:
     dir_name = f"{root}/instances/{instances}/{sample}"
     os.makedirs(dir_name, exist_ok=True)
+
+shutil.copy(f"{root}../resources/microbiome_report.qmd", f"{root}/evaluations/microbiome_report.qmd")
 
 localrules:
     target,
@@ -210,7 +213,7 @@ rule report:
         otu_table="{root}/evaluations/{tool}.{instance}.otu_table.tsv",
         taxonomy="{root}/evaluations/{tool}.{instance}.taxonomy.tsv",
         feature_mapping="{root}/evaluations/{tool}.{instance}.feature_mapping.tsv",
-        metadata="{root}/evaluations/metadata.tsv",
+        metadata=expand("{dataset}/metadata.tsv",dataset=dataset),
         qmd="{root}/evaluations/microbiome_report.qmd",
 
     output:
@@ -231,10 +234,10 @@ rule report:
         workflow.cores
     shell:
         """
-        {container_runner}{params.container_suffix} \
+        {container_runner}{params.container_suffix} -v {dataset}:{dataset} \
         {docker_container} report.sh  {input.qmd} \
             {input.otu_table} \
-           {input.taxonomy} \
-           {input.metadata} \
-           {wildcards.tool}.{wildcards.instance}.report.html
+            {input.taxonomy} \
+            {input.metadata} \
+            {wildcards.tool}.{wildcards.instance}.report.html
         """

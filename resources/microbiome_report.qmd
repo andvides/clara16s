@@ -3,7 +3,7 @@ title: "CLARA16s Microbiome Report"
 engine: knitr
 
 params:
-  otu: hello.tsv
+  otu: ""
   taxonomy: ""
   metadata: ""
 

@@ -29,9 +29,12 @@ RUN apt-get update --fix-missing && \
         python3-dev \
         python3-pip \
         npm \
-        cargo \
+        fastqc \
+        cutadapt \
+        unzip \
+        default-jre \
         && rm -rf /var/lib/apt/lists/*
-
+   
 # --- Python dependencies (global) ---
 RUN pip3 install --no-cache-dir \
     numpy \
@@ -44,12 +47,7 @@ RUN pip3 install --no-cache-dir \
     pandas \
     biopython
 
-RUN apt update
-RUN apt install \
-    fastqc \
-    cutadapt \
-    unzip \
-    default-jre    
+  
 # --- Frontend dependencies ---
 #ADD DATMA16s_frontend /DATMA16s_frontend
 #WORKDIR /DATMA16s_frontend
@@ -57,7 +55,7 @@ RUN apt install \
 
 
 # --- Miniconda ---
-WORKDIR /DATMA16s_tools
+WORKDIR /CLARA16s_tools
 RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /tmp/miniconda.sh && \
     chmod +x /tmp/miniconda.sh && \
     /tmp/miniconda.sh -b -p /miniconda && \
@@ -86,33 +84,34 @@ RUN mkdir -p /.config /.cache && chmod -R a+rw /.config /.cache
 #     -c conda-forge \
 #     -c bioconda
 
-#WORKDIR /krona_tool
-#RUN git clone https://github.com/marbl/Krona.git \
-#    && cd Krona/KronaTools \
-#    && ./install.pl --prefix /opt/krona
-#ENV PATH="/opt/krona/bin:${PATH}"
+WORKDIR /krona_tool
+RUN git clone https://github.com/marbl/Krona.git \
+    && cd Krona/KronaTools \
+    && ./install.pl --prefix /opt/krona
+ENV PATH="/opt/krona/bin:${PATH}"
 
-# ENV CONDA_ACCEPT_CHANNELS=true
-# RUN conda config --add channels conda-forge
-# RUN conda config --add channels bioconda
-# RUN conda config --add channels defaults
-# RUN conda create -n clara_report \
-#     r-base \
-#     r-tidyverse \
-#     r-plotly \
-#     r-dt \
-#     r-vegan \
-#     r-dplyr \
-#     r-tidyr \
-#     r-ggplot2 \
-#     r-vegan  \
-#     quarto \
-#     bioconductor-phyloseq \
-#     -c conda-forge \
-#     -c bioconda 
+ENV CONDA_ACCEPT_CHANNELS=true
+RUN conda config --add channels conda-forge
+RUN conda config --add channels bioconda
+RUN conda config --add channels defaults
+RUN conda create -n clara_report \
+     r-base \
+     r-tidyverse \
+     r-plotly \
+     r-dt \
+     r-vegan \
+     r-dplyr \
+     r-tidyr \
+     r-ggplot2 \
+     r-vegan  \
+     quarto \
+     bioconductor-phyloseq \
+     -c conda-forge \
+     -c bioconda 
     
 RUN pip3 install biopython
 RUN pip3 install pandas
+RUN pip3 install multiqc
 
 # --- Copy project resources ---
 ADD resources/*.py /usr/bin/

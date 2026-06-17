@@ -4,7 +4,7 @@ In short:
 
 ```bash
 git clone https://github.com/andvides/clara16s.git
-cd clara
+cd clara16s
 git checkout tags/v1.0.1
 
 export CLARA16s_ROOT=$(pwd)

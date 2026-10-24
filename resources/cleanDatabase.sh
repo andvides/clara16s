@@ -15,7 +15,7 @@ version=`basename   $release | cut -f2 -d '_' `
 
 cd $repository
 echo "Preparing the reference database"
-source activate qiime2-env
+#source activate qiime2-env
 #qiime2-2023.2
 #pip install git+https://github.com/bokulich-lab/q2-types-genomics.git@2023.2.0.dev0
 #pip install ncbi-datasets-pylib
@@ -130,7 +130,7 @@ else
   qiime tools export --input-path raw_sequences-tax-derep-uniq.qza --output-path .   
 fi
 
-source deactivate 
+#source deactivate 
 
 
 

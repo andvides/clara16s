@@ -1,0 +1,44 @@
+#!/bin/bash
+set -e
+
+CONTAINER=CLARA16s_web
+IMAGE=quay.io/clara16s/clara16s_web:v1.0.0_cv1
+HOST_PORT=3000
+DATA_DIR="${CLARA16s_ROOT}/data/final_results"
+
+if [ -z "$CLARA16s_ROOT" ]; then
+  echo "ERROR: CLARA16s_ROOT is not defined."
+  exit 1
+fi
+if [ ! -f "$DATA_DIR/instances.json" ]; then
+  echo "ERROR: $DATA_DIR/instances.json doesn't exist."
+  echo "Run clara16s_eval."  exit 1
+fi
+if ! docker image inspect "$IMAGE" > /dev/null 2>&1; then
+  echo "Pulling $IMAGE ..."
+  if ! docker pull "$IMAGE"; then
+    echo "ERROR: downloading $IMAGE."
+    exit 1
+  fi
+fi
+
+docker stop "$CONTAINER" 2> /dev/null || true
+docker rm   "$CONTAINER" 2> /dev/null || true
+
+
+docker run -d \
+  --name "$CONTAINER" \
+  --restart unless-stopped \
+  -p ${HOST_PORT}:3000 \
+  -u "$(id -u)" \
+  -v "$DATA_DIR":/app/public/data:ro \
+  "$IMAGE"
+
+sleep 2
+STATUS=$(curl -s -o /dev/null -w '%{http_code}' "http://localhost:${HOST_PORT}/" || true)
+MANIFEST=$(curl -s -o /dev/null -w '%{http_code}' "http://localhost:${HOST_PORT}/data/instances.json" || true)
+echo "'$CONTAINER' running:  http://localhost:${HOST_PORT}"
+echo "home: $STATUS | instances.json: $MANIFEST"
+if [ "$STATUS" != "200" ] || [ "$MANIFEST" != "200" ]; then
+  echo "ERROR, check:  docker logs $CONTAINER"
+fi

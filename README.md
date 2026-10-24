@@ -16,7 +16,9 @@ conda env update -n clara16s --file $CLARA16s_ROOT/workflow/envs/clara16s.yaml
 conda activate clara16s
 
 
-clara16s --cores 8 # running locally on Docker
+clara16s --cores 8 > out 2>&1 & # running locally on Docker
 clara16s --cores 8 --use-singularity # running locally on Singularity
+
+clara16s_web_docker​
 ```
 

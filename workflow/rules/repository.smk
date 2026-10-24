@@ -52,9 +52,10 @@ rule curation:
   container:"{}sif/{}.sif".format(root, config["clara16s_master"].split("/")[-1].split(":")[0])
   output: seq=expand("{root}repository/{Database_name}/{sequences}",root=root,Database_name=Database_name,sequences=sequences), 
           tax=expand("{root}repository/{Database_name}/{taxonomy}",root=root,Database_name=Database_name,taxonomy=taxonomy)
-  params: container_suffix=("curation" if container_runner != "" else "")
+  params: container_suffix=("curation" if container_runner != "" else ""), qiime2container="quay.io/ezlab/qiime2_20254_lemmi16s:v2.0.0_cv1" 
   shell:  """
-          {container_runner}{params.container_suffix}  {docker_container} cleanDatabase.sh {root}repository/{Database_name} {release} {output.seq} {output.tax}  
+          {container_runner}{params.container_suffix} -v {root}../resources/cleanDatabase.sh:/clara/cleanDatabase.sh --platform linux/amd64 \
+          {params.qiime2container} bash /clara/cleanDatabase.sh {root}repository/{Database_name} {release} {output.seq} {output.tax}  
           {clean}
           """
 

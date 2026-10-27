@@ -1,0 +1,7 @@
+container: quay.io/clara16s/<tool>:<version>
+#example: quay.io/clara16s/qiime2_20254_clara16s:v1.0.0_cv1
+#Visit the CLARA16s Container Registry to explore the available container at https://quay.io/organization/clara16s
+tmp: "<tmp>_<instance>_<tool>"
+load_model: 0 #1:true 0:false
+model: "<path to the model>"
+aux_parameters:

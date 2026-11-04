@@ -19,7 +19,13 @@ instances = config["instance"]
 
 load_model=config["load_model"]
 model=config["model"] if load_model != 0 else "none"
-
+if load_model != 0: 
+    passModel=f"-v {model}:{model}:ro "
+    
+else:
+    passModel=""
+print(f"passModel:{passModel}")
+ 
 # SEQUENCING TECHNOLOGY: illumina | nanopore | pacbio (case insensitive), same values as cleaning.smk
 technology = str(config["technology"]).strip().lower()
 if technology not in ("illumina", "nanopore", "pacbio"):
@@ -120,16 +126,18 @@ source = Path(f"{root}/repository/{Database_name}/dna-sequences.fasta")
 link = Path(f"{root}/instances/{instances}/reference.fasta")
 
 if link.exists() or link.is_symlink():
-    link.unlink()
-link.symlink_to(source.resolve())
+    print("Skipping, link exists")#link.unlink()
+else:
+    link.symlink_to(source.resolve())
 
 
 source = Path(f"{root}/repository/{Database_name}/taxonomy.tsv")
 link = Path(f"{root}/instances/{instances}/reference.tsv")
 
 if link.exists() or link.is_symlink():
-    link.unlink()
-link.symlink_to(source.resolve())
+    print("Skipping, link exists")#link.unlink()
+else:
+    link.symlink_to(source.resolve())
 
 localrules:
     target,
@@ -194,7 +202,7 @@ rule training_model:
     shell:
         """
         # run the tool        
-        {container_runner}{params.docker_suffix} {docker_container} {root}../workflow/scripts/task_wrapper.sh \
+        {container_runner}{params.docker_suffix} {passModel} {docker_container} {root}../workflow/scripts/task_wrapper.sh \
         LEMMI16s_training.sh \
         {wildcards.instance} {input.instance} {root}repository/{Database_name} {load_model} {model} '{aux_parameters}' training_{wildcards.instance} 
 
@@ -273,7 +281,7 @@ rule run_analysis:
             fi
         fi
 
-        {container_runner}{params.docker_suffix} {docker_container} {root}../workflow/scripts/task_wrapper.sh \
+        {container_runner}{params.docker_suffix} {passModel} {docker_container} {root}../workflow/scripts/task_wrapper.sh \
         LEMMI16s_analysis.sh {params.tech} \
         {wildcards.instance}-{wildcards.all_samples} {input.instance}/{wildcards.all_samples} \
         {tmp}tmp_{wildcards.instance} {output.predictions} '{aux_parameters}' analysis_{wildcards.instance}-{wildcards.all_samples}

@@ -1,6 +1,6 @@
 # ================================================
 # CLARA16s Master Dockerfile
-# ARM64 / Raspberry Pi 5
+# AMD/ARM64
 # Ubuntu 22.04
 # ================================================
 
@@ -58,8 +58,8 @@ RUN pip3 install --no-cache-dir \
 # =================================================
 
 WORKDIR /CLARA16s_tools
-
-RUN wget  https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /tmp/miniconda.sh \
+#RUN wget https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-aarch64.sh \
+RUN wget  https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh  \
         -O /tmp/miniforge.sh && \
     chmod +x /tmp/miniforge.sh && \
     /tmp/miniforge.sh -b -p /miniforge && \
